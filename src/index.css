@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #FACC15;
+  --color-secondary: #000000;
+  --color-accent: #1F2937;
+  --color-primary-hover: #EAB308;
+
+  --font-sans: "Inter", "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Poppins", "Montserrat", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-secondary font-sans antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight text-secondary;
+  }
+}
+
+/* Custom scrollbar, animations */
+html {
+  scroll-behavior: smooth;
+}
