@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 const INDIAN_MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -16,6 +17,8 @@ const Contact = () => {
    const [message, setMessage] = useState('');
    const [submitted, setSubmitted] = useState(false);
    const [phoneError, setPhoneError] = useState('');
+   const [submitting, setSubmitting] = useState(false);
+   const [submitError, setSubmitError] = useState('');
 
    const validatePhone = (value: string): boolean => {
      const normalized = normalizePhone(value);
@@ -39,10 +42,25 @@ const Contact = () => {
      return true;
    };
 
-   const handleSubmit = (e: React.FormEvent) => {
+   const handleSubmit = async (e: React.FormEvent) => {
      e.preventDefault();
      if (!name.trim() || !message.trim()) return;
      if (!validatePhone(phone)) return;
+
+     setSubmitting(true);
+     setSubmitError('');
+
+     const { error } = await supabase
+       .from('contact_submissions')
+       .insert([{ name: name.trim(), phone: normalizePhone(phone), message: message.trim() }]);
+
+     if (error) {
+       setSubmitError('Failed to send message. Please try again.');
+       setSubmitting(false);
+       return;
+     }
+
+     setSubmitting(false);
      setSubmitted(true);
    };
 
@@ -52,6 +70,7 @@ const Contact = () => {
      setMessage('');
      setSubmitted(false);
      setPhoneError('');
+     setSubmitError('');
    };
 
    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,11 +202,15 @@ const Contact = () => {
                    ></textarea>
                  </div>
                  
+                 {submitError && (
+                   <p className="text-red-500 font-bold text-sm uppercase tracking-wider">{submitError}</p>
+                 )}
                  <button 
                    type="submit" 
-                   className="w-full bg-black text-white hover:bg-primary hover:text-black font-bold uppercase tracking-widest text-lg px-8 py-6 transition-colors border-2 border-black"
+                   disabled={submitting}
+                   className="w-full bg-black text-white hover:bg-primary hover:text-black font-bold uppercase tracking-widest text-lg px-8 py-6 transition-colors border-2 border-black disabled:opacity-50 disabled:cursor-not-allowed"
                  >
-                   Transmit
+                   {submitting ? 'Transmitting...' : 'Transmit'}
                  </button>
                </form>
              )}

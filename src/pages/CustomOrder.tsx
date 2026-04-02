@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 const INDIAN_MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -16,6 +17,8 @@ const CustomOrder = () => {
    const [product, setProduct] = useState('');
    const [submitted, setSubmitted] = useState(false);
    const [phoneError, setPhoneError] = useState('');
+   const [submitting, setSubmitting] = useState(false);
+   const [submitError, setSubmitError] = useState('');
 
    const validatePhone = (value: string): boolean => {
      const normalized = normalizePhone(value);
@@ -39,10 +42,25 @@ const CustomOrder = () => {
      return true;
    };
 
-   const handleSubmit = (e: React.FormEvent) => {
+   const handleSubmit = async (e: React.FormEvent) => {
      e.preventDefault();
      if (!name.trim() || !product.trim()) return;
      if (!validatePhone(phone)) return;
+
+     setSubmitting(true);
+     setSubmitError('');
+
+     const { error } = await supabase
+       .from('custom_order_submissions')
+       .insert([{ name: name.trim(), phone: normalizePhone(phone), product: product.trim() }]);
+
+     if (error) {
+       setSubmitError('Failed to submit request. Please try again.');
+       setSubmitting(false);
+       return;
+     }
+
+     setSubmitting(false);
      setSubmitted(true);
    };
 
@@ -52,6 +70,7 @@ const CustomOrder = () => {
      setProduct('');
      setSubmitted(false);
      setPhoneError('');
+     setSubmitError('');
    };
 
    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -187,11 +206,15 @@ const CustomOrder = () => {
                    ></textarea>
                  </div>
                  
+                 {submitError && (
+                   <p className="text-red-500 font-bold text-sm uppercase tracking-wider">{submitError}</p>
+                 )}
                  <button 
                    type="submit" 
-                   className="w-full bg-primary text-black font-black uppercase tracking-widest text-2xl py-6 hover:bg-black hover:text-primary border-4 border-primary hover:border-black transition-all"
+                   disabled={submitting}
+                   className="w-full bg-primary text-black font-black uppercase tracking-widest text-2xl py-6 hover:bg-black hover:text-primary border-4 border-primary hover:border-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                  >
-                   Execute Request
+                   {submitting ? 'Processing...' : 'Execute Request'}
                  </button>
                </form>
              )}
